@@ -1,0 +1,33 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+.container {
+    max-width: 1200px;
+    padding-left: 1rem;
+    padding-right: 1rem;
+}
+
+.menu-link {
+    font-family: ui-sans-serif, system-ui, sans-serif;
+    font-weight: 500;
+    color: white !important;
+}
+ .menu-link:hover {
+      color: #cccccc !important;
+   }
+.text-brown-700 {
+    color: #654321;
+}
+
+.u-button--ghost .u-button--icon {
+  color: white !important; /* Цвет иконок на белый */
+  opacity: 1 !important;/* Иконки становятся видимыми */
+}
+ .u-button--ghost:hover .u-button--icon {
+    color: #cccccc !important; /* Цвет иконок на при наведении */
+}
+.product-image {
+  object-fit: cover;
+  aspect-ratio: 1 / 1;
+}

@@ -1,0 +1,539 @@
+сейчас ниже я представлю код моего сайта ты должен полностью проанализировать его.в данном сайте нету в верстки для страниц логина и корзины для товаров ты должен это исправить и написать код на основе кода которой я прикрепляю ниже чтобы все между собой было связано.
+поработай с карточками непосредственно товара чая я хочу чтобы на них была кнопка добавить корзину которая была кликабельной хочу чтобы представлялась цена в рублях а не в долларах и чтобы в зависимости от массы продукта к примеру 100 200 500 грамм изменялась.
+так же я столкнулась с проблемой в карточке товара когда я вставляю своё изображение оно становится прямоугольным но моё изображение квадратное и некую часть моего изображение съедает форму нужно это исправить чтобы карточка была квадратной
+Код моего сайта :
+assets/css/main.css
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+.container {
+    max-width: 1200px;
+    padding-left: 1rem;
+    padding-right: 1rem;
+}
+
+.menu-link {
+    font-family: ui-sans-serif, system-ui, sans-serif;
+    font-weight: 500;
+    color: white !important;
+}
+ .menu-link:hover {
+      color: #cccccc !important;
+   }
+.text-brown-700 {
+    color: #654321;
+}
+
+.u-button--ghost .u-button--icon {
+  color: white !important; /* Цвет иконок на белый */
+  opacity: 1 !important;/* Иконки становятся видимыми */
+}
+ .u-button--ghost:hover .u-button--icon {
+    color: #cccccc !important; /* Цвет иконок на при наведении */
+}
+
+components
+-AppFooter.vue
+-AppHeader.vue
+-ProductCard.vue
+-AppFooter.vue- <template>
+    <UFooter class="bg-gray-100 dark:bg-gray-800 text-center py-4">
+        <p class="text-sm text-gray-500 dark:text-gray-400">
+            &copy; 2023 Все права защищены.
+        </p>
+    </UFooter>
+</template>
+
+-AppHeader.vue - <template>
+  <nav class="bg-green-500 dark:bg-gray-800 py-4">
+    <div class="container mx-auto flex justify-between items-center">
+      <NuxtLink to="/" class="text-xl font-bold text-white-800 dark:text-white">
+        Логотип
+      </NuxtLink>
+      <ul class="flex space-x-6">
+        <li v-for="link in navLinks" :key="link.to">
+          <NuxtLink :to="link.to" class="text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white menu-link">
+            {{ link.label }}
+          </NuxtLink>
+        </li>
+      </ul>
+       <div class="flex items-center space-x-4">
+             <UButton icon="i-heroicons-shopping-cart" color="gray" variant="ghost" @click="openCartPage">
+                 Корзина
+              </UButton>
+             <UButton color="gray" variant="ghost" @click="openLoginPage">
+                 Вход
+              </UButton>
+        </div>
+    </div>
+  </nav>
+</template>
+
+<script setup>
+  const navLinks = [
+      { label: 'Главная', to: '/' },
+      { label: 'Каталог', to: '/shop' },
+      { label: 'О нас', to: '/about' },
+      { label: 'Контакты', to: '/contact' },
+  ];
+   const route = useRoute();
+   const router = useRouter();
+  const openCartPage = () => {
+    router.push('/cart')
+   }
+   const openLoginPage = () => {
+        router.push('/login')
+   }
+</script>
+ProductCard.vue- <template>
+    <UCard :ui="{rounded:'rounded-lg', shadow:'shadow-md', ring:'ring-1 ring-gray-200 dark:ring-gray-700',  }">
+        <template #header>
+            <img :src="tea.image" :alt="tea.name" class="w-full h-48 object-cover rounded-t-lg">
+       </template>
+        <div class="p-4">
+            <h3 class="text-xl font-semibold mb-2 text-brown-700">{{ tea.name }}</h3>
+            <p class="text-gray-700 mb-3 line-clamp-2">{{ tea.description }}</p>
+            <div class="flex justify-between items-center">
+               <span class="text-gray-800 font-medium">${{ tea.price }}</span>
+                <UButton color="green" size="sm" variant="outline" @click="openTeaPage">
+                    Подробнее
+               </UButton>
+            </div>
+       </div>
+    </UCard>
+</template>
+
+<script setup>
+   import { useRouter } from 'vue-router';
+    const props = defineProps({
+        tea: {
+            type: Object,
+            required: true
+        }
+    })
+    const router = useRouter();
+    const openTeaPage = () => {
+        router.push(`/tea/${props.tea.id}`)
+    }
+</script>
+composables
+-useCart.js
+-useFetchTea.js
+-useCart.js- import { useState } from "#imports";
+export const useCart = () => {
+    const cartItems = useState('cartItems', () => [])
+    const addToCart = (item) => {
+        cartItems.value.push(item)
+    }
+     const removeFromCart = (itemId) => {
+        cartItems.value = cartItems.value.filter(item => item.id !== itemId)
+    }
+    const clearCart = () => {
+        cartItems.value = []
+    }
+
+    const total = computed(() => {
+        return cartItems.value.reduce((acc, item) => {
+            return acc + item.price
+        }, 0)
+    })
+
+    return {
+        cartItems,
+        addToCart,
+        removeFromCart,
+         clearCart,
+        total
+    }
+}
+-useFetchTea.js
+import { useAsyncData } from "#imports";
+
+export const useFetchTea = async (url, options = {}) => {
+    const { data, pending, error, refresh } = await useAsyncData(
+        url,
+        async () => {
+            const { data } = await $fetch(url);
+            return data
+        },
+       options
+    );
+    return {
+        data,
+        pending,
+        error,
+        refresh
+    };
+};
+layouts/default.vue-<template>
+  <div class="bg-gray-50 dark:bg-gray-900">
+     <AppHeader />
+       <main>
+           <slot />
+        </main>
+       <AppFooter />
+    </div>
+</template>
+
+<script setup>
+ import AppHeader from '~/components/AppHeader.vue';
+import AppFooter from '~/components/AppFooter.vue';
+</script>
+
+pages/
+-/tea/[slug].vue
+<template>
+    <div class="container mx-auto py-10">
+      <UCard :ui="{ rounded: 'rounded-xl', shadow: 'shadow-md' }">
+        <template #header>
+          <img :src="tea.image" :alt="tea.name" class="w-full h-96 object-cover rounded-t-xl" />
+        </template>
+        <div class="p-6">
+          <h2 class="text-4xl font-bold mb-4 text-brown-700">{{ tea.name }}</h2>
+          <p class="text-gray-700 mb-6">{{ tea.description }}</p>
+          <div class="flex justify-between items-center">
+            <span class="text-gray-800 font-medium text-xl">${{ tea.price }}</span>
+            <UButton color="green" variant="solid">Добавить в корзину</UButton>
+          </div>
+        </div>
+      </UCard>
+    </div>
+  </template>
+  
+  <script setup>
+  import { useRoute } from 'vue-router';
+  import { fetchTea } from '~/utils/api';
+  
+  const route = useRoute();
+  const { data: tea, error } = await useAsyncData('tea', () =>
+    fetchTea(route.params.slug)
+  );
+  
+  if (error.value) {
+    throw createError({ statusCode: 404, statusMessage: 'Tea Not Found' });
+  }
+  </script>
+  
+-about.vue
+<template>
+    <div class="container mx-auto py-10">
+      <h2 class="text-3xl font-bold mb-6 text-center text-brown-700">О нас</h2>
+        <div class="flex flex-col md:flex-row gap-8 items-center">
+            <div class="md:w-1/2">
+                 <p class="text-lg text-gray-700 mb-4">
+                  Мы небольшая компания, увлеченная чаем. Наша миссия - предложить вам лучшие сорта чая, отобранные с заботой и вниманием к деталям. Мы работаем с проверенными поставщиками, чтобы гарантировать высочайшее качество нашей продукции.
+                  </p>
+                  <p class="text-lg text-gray-700 mb-4">
+                  Наша команда состоит из экспертов и любителей чая, которые с удовольствием помогут вам выбрать идеальный чай для вашего настроения и вкуса. Мы ценим каждого нашего клиента и стремимся обеспечить исключительный уровень обслуживания.
+                  </p>
+                 <p class="text-lg text-gray-700">
+                      Присоединяйтесь к нам в этом увлекательном путешествии по миру чая, и позвольте нам поделиться с вами нашей любовью к этому напитку!
+                  </p>
+          </div>
+             <div class="md:w-1/2" :ui="{shadow:'shadow-md',rounded:'rounded-xl',overflow:'overflow-hidden'}">
+               <img src="https://images.immediate.co.uk/production/volatile/sites/30/2020/08/make-tea-2-14c12ff.jpg?quality=90&resize=768,574" alt="Наша команда" class="object-cover w-full h-96">
+              </div>
+      </div>
+    </div>
+  </template>
+  
+-cart.vue
+<template>
+    <div class="container mx-auto py-10">
+      <h2 class="text-3xl font-bold mb-6 text-center text-brown-700">Корзина</h2>
+       <p class="text-lg text-gray-700 mb-4">Здесь будет отображаться ваша корзина.</p>
+    </div>
+  </template>
+
+-contact.vue
+<template>
+    <div class="container mx-auto py-10">
+        <h2 class="text-3xl font-bold mb-6 text-center text-brown-700">Контакты</h2>
+         <div class="flex flex-col md:flex-row gap-8">
+            <div class="md:w-1/2">
+                <h3 class="text-2xl font-semibold mb-4 text-brown-700">Наш адрес</h3>
+                <p class="text-lg text-gray-700 mb-4">ул. Чайная, 123</p>
+                <p class="text-lg text-gray-700 mb-4">г. Чайный, 456789</p>
+               <h3 class="text-2xl font-semibold mb-4 text-brown-700">Наши контакты</h3>
+                <p class="text-lg text-gray-700 mb-4">Телефон: +1 800 123 4567</p>
+                <p class="text-lg text-gray-700 mb-4">Email: info@example.com</p>
+            </div>
+             <div class="md:w-1/2">
+                 <UCard :ui="{shadow:'shadow-md',rounded:'rounded-xl'}">
+                        <template #header>
+                                 <h3 class="text-2xl font-semibold mb-4 text-brown-700">Напишите нам</h3>
+                         </template>
+                         <div class="p-4">
+                         <UForm>
+                               <UInput placeholder="Ваше имя" class="mb-4"/>
+                               <UInput placeholder="Ваш email" type="email" class="mb-4"/>
+                               <UTextarea placeholder="Ваше сообщение" class="mb-4"/>
+                                <UButton color="green" variant="solid">Отправить</UButton>
+                             </UForm>
+                         </div>
+                  </UCard>
+             </div>
+        </div>
+    </div>
+</template>
+
+
+-index.vue
+<template>
+    <div>
+        <!-- Геройский блок -->
+        <section class="py-24" style="background-image: linear-gradient(to bottom, #f5f5dc, #ffffff);">
+            <div class="container mx-auto text-center">
+                <UCard class="relative inline-block overflow-hidden mb-8" :ui="{rounded:'rounded-xl',shadow:'shadow-2xl'}">
+                    <img
+                     src="https://i.pinimg.com/736x/02/85/36/028536c873e94c02baf9236b3f3c1224.jpg"
+                     alt="Чайные плантации"
+                     class="object-cover w-full h-96 transform hover:scale-105 transition-transform duration-500"
+                  />
+                </UCard>
+                <h1 class="text-5xl font-extrabold mb-6 text-brown-700 tracking-wide">
+                    Откройте для себя мир чая
+                </h1>
+               <p class="text-xl mb-10 text-gray-700 leading-relaxed">
+                    Мы предлагаем широкий выбор изысканных сортов чая для настоящих ценителей.
+                </p>
+              <UButton
+                 color="green"
+                 size="lg"
+                variant="solid"
+                 class="rounded-full transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-green-400 focus:ring-opacity-50"
+                  :ui="{shadow:'shadow-md'}"
+              >
+                Подробнее
+              </UButton>
+            </div>
+        </section>
+         <!-- Блок "О нас" -->
+       <section class="py-20 bg-white dark:bg-gray-800">
+            <div class="container mx-auto flex flex-col md:flex-row items-center gap-10">
+                 <div class="md:w-1/2 mb-8 md:mb-0">
+                     <h2 class="text-4xl font-bold mb-6 text-brown-700 tracking-tight">Наша страсть к чаю</h2>
+                     <p class="text-lg text-gray-700 mb-6 leading-relaxed">
+                     Мы — команда энтузиастов, увлеченных чаем. Наша миссия — предложить вам лучшие сорта чая, собранные с любовью и заботой.
+                     </p>
+                    <p class="text-lg text-gray-700 leading-relaxed">
+                    Мы тщательно отбираем каждый сорт, чтобы вы могли насладиться неповторимым вкусом и ароматом настоящего чая.
+                   </p>
+                  </div>
+                   <div class="md:w-1/2" :ui="{rounded:'rounded-xl',shadow:'shadow-2xl',overflow:'overflow-hidden'}">
+                    <img
+                      src="https://psv4.userapi.com/s/v1/d/r6vAClN-tSf5N0-xCpCJodlrRNhEcdxJPaOl6oCOs7JF597RzCqir7M_A3fxNjLnJi2BZIl7QZ00Oj4FkUjJSIxn-ojtc5IZoJf6Ii8LUfNkEua8O-_Nbw/photo_2024-12-26_11-20-53.jpg"
+                      alt="Чашки с чаем"
+                       class="object-cover w-full h-96 "
+                  />
+              </div>
+           </div>
+         </section>
+         <!-- Блок популярных товаров -->
+          <section class="py-20" style="background-image: linear-gradient(to top, #ffffff, #f5f5dc);">
+              <div class="container mx-auto">
+                  <h2 class="text-4xl font-bold mb-10 text-center text-brown-700 tracking-tight">
+                     Популярные товары
+                 </h2>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                     <ProductCard v-for="tea in popularTeas" :key="tea.id" :tea="tea" />
+                </div>
+             </div>
+         </section>
+    </div>
+</template>
+<script setup>
+import { fetchTeas } from '~/utils/api';
+const { data: popularTeas } = await useAsyncData("popularTeas", () => fetchTeas({featured: true}))
+</script>
+
+-login.vue
+<template>
+    <div class="container mx-auto py-10">
+      <h2 class="text-3xl font-bold mb-6 text-center text-brown-700">Вход</h2>
+       <p class="text-lg text-gray-700 mb-4">Здесь будет форма для входа.</p>
+    </div>
+  </template>
+
+-shop.vue
+<template>
+    <div class="container mx-auto py-10">
+      <h2 class="text-3xl font-bold mb-6 text-center text-brown-700">Каталог чая</h2>
+      <div class="flex justify-between mb-6">
+        <USelect
+          v-model="selectedSort"
+          :options="sortOptions"
+          placeholder="Сортировать"
+        />
+        <USelect
+          v-model="selectedType"
+          :options="typeOptions"
+          placeholder="Тип чая"
+        />
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <ProductCard v-for="tea in filteredTeas" :key="tea.id" :tea="tea" />
+      </div>
+    </div>
+  </template>
+  
+  <script setup>
+  import { fetchTeas } from '~/utils/api';
+  import { ref, computed } from 'vue';
+  
+  const { data: allTeas } = await useAsyncData('allTeas', () => fetchTeas());
+  
+  const selectedSort = ref(null);
+  const selectedType = ref(null);
+  
+  const sortOptions = ref([
+    { label: 'По возрастанию цены', value: 'price_asc' },
+    { label: 'По убыванию цены', value: 'price_desc' },
+  ]);
+  
+  const typeOptions = ref([
+    { label: 'Зеленый чай', value: 'Зеленый чай' },
+    { label: 'Черный чай', value: 'Черный чай' },
+    { label: 'Белый чай', value: 'Белый чай' },
+    { label: 'Улун', value: 'Улун' },
+    { label: 'Матча', value: 'Матча' },
+     { label: 'Травяной чай', value: 'Травяной чай' },
+  ]);
+  
+  const filteredTeas = computed(() => {
+    let filtered = [...allTeas.value];
+    if (selectedType.value) {
+      filtered = filtered.filter((tea) => tea.type === selectedType.value);
+    }
+    if (selectedSort.value) {
+      if (selectedSort.value === 'price_asc') {
+        filtered.sort((a, b) => a.price - b.price);
+      } else if (selectedSort.value === 'price_desc') {
+        filtered.sort((a, b) => b.price - a.price);
+      }
+    }
+    return filtered;
+  });
+  </script>
+  utils/api.js
+  // utils/api.js
+const mockTeas = [
+    {
+        id: 1,
+        name: "Зеленый чай Сенча",
+        description: "Японский зеленый чай, имеет свежий травянистый аромат и легкий сладковатый вкус. Идеально подходит для утреннего чаепития.",
+        price: 18,
+        image: "https://moschaitorg.ru/upload/resize_cache/iblock/cd6/8s73sgtxqy6xi8bdktudvd5ijdfigr25/689_689_14386c7d0a80fb8aee4bdea45538d5f0b/zelenyy_chay_sencha.png",
+        type: 'Зеленый чай'
+    },
+    {
+        id: 2,
+        name: "Черный чай Ассам",
+        description: "Индийский черный чай, обладает насыщенным солодовым вкусом и крепким ароматом. Отлично подходит для завтрака.",
+        price: 22,
+        image: "https://moschaitorg.ru/upload/resize_cache/iblock/773/4lpfufehlp0pzhul7rthar2bx3tbrn6w/700_700_14386c7d0a80fb8aee4bdea45538d5f0b/C007.png",
+         type: 'Черный чай'
+    },
+    {
+        id: 3,
+        name: "Белый Бай Хао Инь Чжень",
+        description: "Китайский белый чай, имеет нежный цветочный аромат и мягкий сладковатый вкус. Прекрасен для расслабляющего чаепития.",
+        price: 28,
+        image: "https://moschaitorg.ru/upload/resize_cache/iblock/0c0/1000_1000_24386c7d0a80fb8aee4bdea45538d5f0b/0c0014ce126053b3c56813ee07e3c709.jpg",
+        type: 'Белый чай'
+    },
+    {
+        id: 4,
+        name: "Улун Те Гуань Инь",
+        description: "Китайский улун, имеет сложный фруктовый аромат и освежающий вкус. Подходит для послеобеденного чаепития.",
+        price: 25,
+        image: "https://moschaitorg.ru/upload/resize_cache/iblock/29c/6jod4ppjhd9z2a4u07cd9abdfzsy1o5v/1000_1000_14386c7d0a80fb8aee4bdea45538d5f0b/ulun_te_guan_in_s_zhasminom_i_godzhi.jpg",
+         type: 'Улун'
+    },
+    {
+        id: 5,
+        name: "Матча церемониальная",
+        description: "Японский порошковый зеленый чай, обладает насыщенным травянистым вкусом и ярким зеленым цветом. Используется для чайной церемонии.",
+        price: 35,
+        image: "https://moschaitorg.ru/upload/resize_cache/iblock/7ab/ygm4rwl08jmf6zhut31fepi98kifkftj/700_700_14386c7d0a80fb8aee4bdea45538d5f0b/zelenaya_matcha_premium_yaponiya.jpg",
+         type: 'Матча'
+    },
+    {
+        id: 6,
+        name: "Эрл Грей",
+        description: "Ароматный черный чай с добавлением масла бергамота. Насыщенный вкус и отличный аромат.",
+        price: 20,
+        image: "https://moschaitorg.ru/upload/resize_cache/iblock/006/x1nxyjwlep82fu4y1d45zgi48v4gdwqs/700_700_14386c7d0a80fb8aee4bdea45538d5f0b/chernyy_chay_erl_grey_klassik.jpg",
+        type: 'Черный чай'
+    },
+    {
+        id: 7,
+        name: "Ройбуш",
+        description: "Натуральный травяной напиток из Южной Африки. Не содержит кофеина.",
+        price: 15,
+         image: "https://moschaitorg.ru/upload/resize_cache/iblock/e27/843rlxnanum0uivpuv08q5m8mu8ytpav/800_800_14386c7d0a80fb8aee4bdea45538d5f0b/1_2-kopiya.jpg",
+         type: 'Травяной чай'
+        },
+         {
+            id: 8,
+             name: "Жасминовый чай",
+             description: "Зеленый чай, ароматизированный цветками жасмина. Приятный цветочный аромат.",
+             price: 23,
+            image: "https://moschaitorg.ru/upload/resize_cache/iblock/75a/jf8g1m0vlg89n7dt4divsgmfawk12ess/1000_1000_24386c7d0a80fb8aee4bdea45538d5f0b/1-kopiya.jpg",
+            type: 'Зеленый чай'
+         },
+         {
+           id: 9,
+           name: "Пуэр",
+            description: "Китайский постферментированный чай. Обладает землистым вкусом и имеет своеобразный аромат.",
+            price: 30,
+             image: "https://moschaitorg.ru/upload/resize_cache/iblock/8d7/yebw5zqdgqjti2jfm4gatag9bpioxvhh/700_700_14386c7d0a80fb8aee4bdea45538d5f0b/shen_puer_rassypnoy_2016.jpg",
+            type: 'Черный чай'
+         },
+          {
+            id: 10,
+            name: "Гречишный чай Ку Цяо",
+             description: "Напиток из обжаренных семян татарской гречихи. Имеет ореховый вкус и аромат.",
+             price: 24,
+            image: "https://moschaitorg.ru/upload/resize_cache/iblock/b5d/jn9oxhsrcvqduj0kix2fm2lqdam5ewdb/800_800_14386c7d0a80fb8aee4bdea45538d5f0b/1-kopiya.jpg",
+             type: 'Травяной чай'
+         }
+    ];
+    export async function fetchTeas(params = {}) {
+      return new Promise((resolve) => {
+         setTimeout(() => {
+            let filteredTeas = [...mockTeas]
+            if (params.featured) {
+                filteredTeas = filteredTeas.filter((tea, index) => index < 3)
+            }
+          resolve(filteredTeas)
+         }, 200)
+      });
+    }
+    export async function fetchTea(slug) {
+        return new Promise((resolve, reject) => {
+            setTimeout(() => {
+                const tea = mockTeas.find(tea => tea.id == slug)
+                if(tea){
+                  resolve(tea)
+               }else {
+                    reject("Tea not found")
+                }
+            }, 200)
+        });
+    }
+app/vue-
+<template>
+  <NuxtLayout>
+      <NuxtPage />
+  </NuxtLayout>
+</template>
+nuxt.config.ts-
+// https://nuxt.com/docs/api/configuration/nuxt-config
+export default defineNuxtConfig({
+  compatibilityDate: '2024-11-01',
+  devtools: { enabled: true },
+  modules: ['@nuxt/ui'],
+  css: ['~/assets/css/main.css'],
+})

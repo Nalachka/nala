@@ -8,7 +8,8 @@
     "generate": "nuxt generate",
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare",
-     "deploy": "nuxt generate && gh-pages -d .output/public",
+    "deploy": "nuxt generate && gh-pages -d dist",
+    "pages": "gh-pages -d dist"
   },
   "dependencies": {
     "@nuxt/ui": "^2.20.0",
